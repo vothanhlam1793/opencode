@@ -47,6 +47,7 @@ export function path() {
   }
   if (
     ["latest", "beta", "prod"].includes(InstallationChannel) ||
+    InstallationChannel.includes("custom") ||
     process.env.OPENCODE_DISABLE_CHANNEL_DB === "1" ||
     process.env.OPENCODE_DISABLE_CHANNEL_DB === "true"
   )
