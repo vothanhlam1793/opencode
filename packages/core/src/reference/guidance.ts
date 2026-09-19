@@ -39,13 +39,13 @@ const layer = Layer.effect(
     return Service.of({
       load: Effect.fn("ReferenceGuidance.load")(function* () {
         const available = (yield* references.list())
-          .filter((reference) => reference.description !== undefined)
+          .filter((reference) => reference?.name && reference.description !== undefined)
           .map((reference) => ({
             name: reference.name,
             path: reference.path,
             description: reference.description,
           }))
-          .toSorted((a, b) => a.name.localeCompare(b.name))
+          .toSorted((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
         if (available.length === 0) return SystemContext.empty
         return SystemContext.make({
           key: SystemContext.Key.make("core/reference-guidance"),
