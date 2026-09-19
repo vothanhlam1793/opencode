@@ -51,9 +51,9 @@ const layer = Layer.effect(
           return SystemContext.empty
         const available = permitted
           .flatMap((skill) =>
-            skill.description === undefined ? [] : [{ name: skill.name, description: skill.description }],
+            skill?.name && skill.description !== undefined ? [{ name: skill.name, description: skill.description }] : [],
           )
-          .toSorted((a, b) => a.name.localeCompare(b.name))
+          .toSorted((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
         return SystemContext.make({
           key: SystemContext.Key.make("core/skill-guidance"),
           codec: Schema.toCodecJson(Schema.Array(Summary)),
