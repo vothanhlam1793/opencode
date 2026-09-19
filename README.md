@@ -43,6 +43,19 @@
 
 ---
 
+### Custom Fork Changes (v1.18.31-custom)
+
+Bản fork nội bộ duy trì trên nền tảng `v1.18.31` với các tinh chỉnh và bản vá:
+
+- **Fix lỗi 400 Bad Request với Gemini (Tool Schema Sanitize):**
+  - Tự động sanitize JSON Schema cho tools/functions khi model ID hoặc Provider chứa `gemini` (lọc bỏ `additionalProperties`, chuẩn hóa `enum` số sang chuỗi, loại bỏ `properties: {}` rỗng).
+  - Khắc phục triệt để lỗi khi gọi các model Gemini thông qua các router trung gian / gateway OpenAI-compatible.
+- **Tương thích Reasoning & Thinking Payload:**
+  - Bổ sung mapping tham số suy nghĩ cho Gemini (`thinkingConfig` song song `reasoningEffort`) trên các kết nối OpenAI-compatible.
+- **Bảo toàn tính ổn định:** Giữ nguyên kiến trúc TUI và cơ chế hoạt động ổn định của OpenCode v1.18.x.
+
+---
+
 ### Installation
 
 ```bash
