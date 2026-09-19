@@ -1601,8 +1601,13 @@ export function schema(model: Provider.Model, schema: JSONSchema7): JSONSchema7 
     }
   }
 
-  // Convert integer enums to string enums for Google/Gemini
-  if (model.providerID === "google" || model.api.id.includes("gemini")) {
+  // Convert integer enums to string enums and sanitize schemas for Google/Gemini
+  if (
+    model.providerID === "google" ||
+    model.providerID?.includes("google") ||
+    model.api?.id?.toLowerCase().includes("gemini") ||
+    model.id?.toLowerCase().includes("gemini")
+  ) {
     const isPlainObject = (node: unknown): node is Record<string, any> =>
       typeof node === "object" && node !== null && !Array.isArray(node)
     const hasCombiner = (node: unknown) =>
@@ -1639,6 +1644,10 @@ export function schema(model: Provider.Model, schema: JSONSchema7): JSONSchema7 
 
       const result: any = {}
       for (const [key, value] of Object.entries(obj)) {
+        if (key === "additionalProperties") {
+          // Gemini tool schemas do not support additionalProperties: false / true
+          continue
+        }
         if (key === "enum" && Array.isArray(value)) {
           // Convert all enum values to strings
           result[key] = value.map((v) => String(v))
@@ -1690,6 +1699,11 @@ export function schema(model: Provider.Model, schema: JSONSchema7): JSONSchema7 
       if (result.type && result.type !== "object" && !hasCombiner(result)) {
         delete result.properties
         delete result.required
+      }
+
+      // Remove empty properties object on objects with no properties to avoid Gemini 400 schema error
+      if (result.type === "object" && result.properties && Object.keys(result.properties).length === 0) {
+        delete result.properties
       }
 
       return result
@@ -1823,6 +1837,10 @@ function reasoningEffort(model: Provider.Model, effort: string) {
     case "venice-ai-sdk-provider":
     case "ai-gateway-provider":
     case "merge-gateway-ai-sdk-provider":
+      // For OpenAI-compatible routers proxying Gemini, pass effort in both compatible forms
+      if (model.id.toLowerCase().includes("gemini") || model.api.id.toLowerCase().includes("gemini")) {
+        return { reasoningEffort: effort, thinkingConfig: { includeThoughts: true, thinkingLevel: effort } }
+      }
       return { reasoningEffort: effort }
     case "gitlab-ai-provider":
       if (model.family?.startsWith("gpt")) return { reasoningEffort: effort }
