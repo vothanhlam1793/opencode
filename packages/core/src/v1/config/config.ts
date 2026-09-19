@@ -164,6 +164,9 @@ export const Info = Schema.Struct({
       reserved: Schema.optional(NonNegativeInt).annotate({
         description: "Token buffer for compaction. Leaves enough window to avoid overflow during compaction.",
       }),
+      max_context: Schema.optional(PositiveInt).annotate({
+        description: "Maximum context window size for triggering compaction. Overrides model context limit if smaller.",
+      }),
     }),
   ),
   experimental: Schema.optional(

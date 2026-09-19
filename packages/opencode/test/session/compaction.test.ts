@@ -452,6 +452,22 @@ describe("session.compaction.isOverflow", () => {
     ),
   )
 
+  it.live(
+    "respects compaction.max_context override when context is larger",
+    provideTmpdirInstance(
+      () =>
+        Effect.gen(function* () {
+          const compact = yield* SessionCompaction.Service
+          const model = createModel({ context: 1_000_000, output: 32_000 })
+          // usable context without override would be 1M - 32k = 968k
+          // with max_context 100k, usable is 100k - 32k = 68k
+          const tokens = { input: 70_000, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
+          expect(yield* compact.isOverflow({ tokens, model })).toBe(true)
+        }),
+      { config: { compaction: { max_context: 100_000 } } },
+    ),
+  )
+
   // ─── Bug reproduction tests ───────────────────────────────────────────
   // These tests demonstrate that when limit.input is set, isOverflow()
   // does not subtract any headroom for the next model response. This means
