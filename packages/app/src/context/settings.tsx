@@ -57,10 +57,10 @@ export interface Settings {
 export const monoDefault = "System Mono"
 export const sansDefault = "System Sans"
 export const terminalDefault = "JetBrainsMono Nerd Font Mono"
-const legacyNewLayoutDesignsDefault = import.meta.env.VITE_OPENCODE_CHANNEL !== "prod"
-export const newLayoutDesignsDefault = true
-// Existing users can switch layouts until local midnight on this date. Set new Date(YYYY, M-1, D) to show.
-export const oldInterfaceSunset = new Date(2026, 8, 14)
+const legacyNewLayoutDesignsDefault = false
+export const newLayoutDesignsDefault = false
+// Disable sunset retirement permanently on custom fork so users can enjoy classic layout
+export const oldInterfaceSunset = undefined as Date | undefined
 const newLayoutDesignsUpgradeCutoff = "1.17.19"
 
 function compareVersions(a: string, b: string) {
@@ -115,8 +115,8 @@ export function shouldEnableNewLayout(previous: string | undefined, current: str
 
 export function layoutTransitionState(scheduled: boolean, eligible: boolean, retired: boolean, dismissed: boolean) {
   return {
-    available: scheduled && eligible && !retired,
-    notice: scheduled && eligible && retired && !dismissed,
+    available: true,
+    notice: false,
   }
 }
 
@@ -126,8 +126,7 @@ export function nextSunsetCheckDelay(sunset: number, now: number) {
   return Math.min(Math.max(0, sunset - now), maximumSunsetTimeout)
 }
 
-export function resolveNewLayoutDesigns(retired: boolean, preference: boolean | undefined, fallback = true) {
-  if (retired) return true
+export function resolveNewLayoutDesigns(retired: boolean, preference: boolean | undefined, fallback = false) {
   return preference ?? fallback
 }
 
@@ -252,29 +251,11 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
     const layoutTransitionClassified = createMemo(() => typeof store.general?.layoutTransitionEligible === "boolean")
     const layoutTransitionEligible = withFallback(() => store.general?.layoutTransitionEligible, false)
     const newInterfaceNoticeDismissed = withFallback(() => store.general?.newInterfaceNoticeDismissed, false)
-    const layoutUpgrade = createMemo(() =>
-      launchState.classified && !launchState.migrationApplied
-        ? shouldEnableNewLayout(launchState.previous, platform.version)
-        : false,
-    )
     const layoutTransition = createMemo(() =>
-      layoutTransitionState(!!sunset, layoutTransitionEligible(), oldInterfaceRetired(), newInterfaceNoticeDismissed()),
+      layoutTransitionState(false, true, false, false),
     )
     const newLayoutDesigns = createMemo(() => {
-      if (layoutUpgrade()) return true
-      if (!ready() && !oldInterfaceRetired()) return legacyNewLayoutDesignsDefault
-      if (!layoutTransitionClassified()) {
-        return resolveNewLayoutDesigns(
-          oldInterfaceRetired(),
-          store.general?.newLayoutDesigns,
-          legacyNewLayoutDesignsDefault,
-        )
-      }
-      return resolveNewLayoutDesigns(
-        oldInterfaceRetired(),
-        store.general?.newLayoutDesigns,
-        layoutTransitionEligible() ? legacyNewLayoutDesignsDefault : newLayoutDesignsDefault,
-      )
+      return store.general?.newLayoutDesigns ?? false
     })
     const visible = (preference: () => boolean) => createMemo(() => !newLayoutDesigns() || preference())
     const initializeAgentVisibility = (existing: boolean) => {
@@ -320,9 +301,6 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
 
     createEffect(() => {
       if (!ready() || !launchState.classified || launchState.migrationApplied) return
-      if (layoutUpgrade() && store.general?.newLayoutDesigns !== true) {
-        setStore("general", "newLayoutDesigns", true)
-      }
       setLaunchState("migrationApplied", true)
     })
 
@@ -338,9 +316,7 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
     })
 
     createEffect(() => {
-      if (!ready() || !oldInterfaceRetired()) return
-      if (store.general?.newLayoutDesigns === true) return
-      setStore("general", "newLayoutDesigns", true)
+      // Allow user preference to control layout without forced override
     })
 
     createEffect(() => {
@@ -430,9 +406,8 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         },
         newLayoutDesigns,
         setNewLayoutDesigns(value: boolean) {
-          const next = oldInterfaceRetired() ? true : value
-          if (newLayoutDesigns() === next) return
-          setStore("general", "newLayoutDesigns", next)
+          if (newLayoutDesigns() === value) return
+          setStore("general", "newLayoutDesigns", value)
           if (typeof window !== "undefined") setTimeout(() => window.location.reload())
         },
         layoutTransitionClassified,
