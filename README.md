@@ -43,9 +43,24 @@
 
 ---
 
-### Custom Fork Changes (v1.18.31-custom)
+### Lam Custom Fork — v1.18.35-lam-classic.1
 
-Bản fork nội bộ duy trì trên nền tảng `v1.18.31` với các tinh chỉnh và bản vá:
+Từ **2026-10-12**, dự án được phát triển theo nhánh fork riêng của Lâm, trên nền OpenCode upstream `v1.18.35`.
+
+- **Repository:** https://github.com/vothanhlam1793/opencode
+- **Nhánh phát triển:** `v1.18.35-lam-custom`
+- **Tag mốc fork độc lập:** `v1.18.35-lam-classic.1`
+- **Commit khôi phục Classic V1:** `568322cf44`
+- **Quy tắc phiên bản:** các bản tiếp theo của dòng Classic này dùng `v1.18.35-lam-classic.2`, `.3`, ...; mỗi tag gắn với một commit cụ thể và không bị ghi đè.
+- **Upstream:** giữ remote `upstream` để tham khảo; thay đổi upstream chỉ được tích hợp có chọn lọc sau khi review và kiểm tra tương thích với fork.
+- **Giao diện:** mặc định Classic V1, bỏ thời hạn khai tử và cơ chế ép chuyển sang layout V2; vẫn cho phép người dùng chọn layout.
+- **Kiểm tra mốc Classic:** typecheck app và hook pre-push toàn repo đã đạt khi push commit `568322cf44`.
+
+Tag này ghi nhận source trong repository. Gateway và thiết lập triển khai tại `/home/leco/.opencode/auth-gate/` được quản lý ngoài repository; version hiển thị của binary đã triển khai có thể khác tên Git tag.
+
+#### Các bản vá custom được kế thừa
+
+Các tinh chỉnh và bản vá trước mốc fork độc lập:
 
 - **Fix lỗi 400 Bad Request với Gemini (Tool Schema Sanitize):**
   - Tự động sanitize JSON Schema cho tools/functions khi model ID hoặc Provider chứa `gemini` (lọc bỏ `additionalProperties`, chuẩn hóa `enum` số sang chuỗi, loại bỏ `properties: {}` rỗng).
